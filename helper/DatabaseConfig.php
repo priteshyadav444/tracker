@@ -1,5 +1,8 @@
 <?php
-class Database
+
+namespace Tracker\Helper;
+
+class DatabaseConfig
 {
     private $servername;
     private $username;
@@ -17,13 +20,13 @@ class Database
     public function connect()
     {
         try {
-            $connection = new mysqli($this->servername, $this->username, $this->password, $this->db);
+            $connection = new \mysqli($this->servername, $this->username, $this->password, $this->db);
             if ($connection->connect_error) {
-                throw new Exception("Database connection failed: " . $connection->connect_error);
+                throw new \Exception("Config connection failed: " . $connection->connect_error);
             }
             return $connection;
-        } catch (Exception $e) {
-            throw new Exception("Database connection error: " . $e->getMessage());
+        } catch (\Exception $e) {
+            throw new \Exception("Database connection error: " . $e->getMessage());
         }
     }
 }
