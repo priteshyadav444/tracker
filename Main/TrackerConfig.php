@@ -1,41 +1,30 @@
 <?php
-@session_start();
-date_default_timezone_set("Asia/Calcutta");
 
-include './Userinfo.php';
-include './connection.php';
+namespace Tracker\Main;
 
-class IdConfig
-{
-    public $trackingKey  = "visitid";
-    public $engagementKey = "engid";
-    public $sessionKey = "PHPSESSID";
-    public $domain = ""; // mention your domain name in .example.com 
-    public function __construct($trackingKey = "visitid", $engagementKey = "engid", $sessionKey = "PHPSESSID", $domain = "")
-    {
-        $this->trackingKey = $trackingKey;
-        $this->engagementKey = $engagementKey;
-        $this->sessionKey = $sessionKey;
-        $this->$domain = $domain;
-    }
-}
-class Analytics
+use Tracker\Helper\UserInfo;
+use Tracker\Helper\SessionCookiesConfig;
+
+use Tracker\Main\DBConnection;
+
+
+class TrackerConfig
 {
 
     public $userInfo = "";
-    public $conn = "";
+    public $dbConnection = "";
     public $trackingKey  = "";
     public $engagementKey = "";
     public $sessionKey = "";
     public $domain = ""; // mention your domain name in .example.com 
-    public function __construct(UserInfo $userInfo = null, ConnectionLog $conn = null, IdConfig $idConfig)
+    public function __construct(DBConnection $dbConnection = null, SessionCookiesConfig $sessionCookiesConfig = new SessionCookiesConfig(), UserInfo $userInfo = new UserInfo)
     {
         $this->userInfo = $userInfo;
-        $this->conn = $conn;
-        $this->trackingKey = $idConfig->trackingKey;
-        $this->engagementKey = $idConfig->engagementKey;
-        $this->sessionKey = $idConfig->sessionKey;
-        $this->domain = $idConfig->domain;
+        $this->dbConnection = $dbConnection;
+        $this->trackingKey = $sessionCookiesConfig->trackingKey;
+        $this->engagementKey = $sessionCookiesConfig->engagementKey;
+        $this->sessionKey = $sessionCookiesConfig->sessionKey;
+        $this->domain = $sessionCookiesConfig->domain;
     }
     public function setRetentionCookie()
     {
@@ -47,7 +36,7 @@ class Analytics
 
         if ($this->sessionKey && $insertInDatabase) {
             $info[0] = session_id();
-            $this->conn->insertEngagementLog($info);
+            $this->dbConnection->insertEngagementLog($info);
         }
     }
     public function startTracker()
@@ -56,8 +45,8 @@ class Analytics
     }
     public function checkRetention()
     {
-        $retation_date = new DateTime($_COOKIE[$this->trackingKey]);
-        $current_date = new DateTime($this->getDate());
+        $retation_date = new \DateTime($_COOKIE[$this->trackingKey]);
+        $current_date = new \DateTime($this->getDate());
 
         $diff = date_diff($retation_date, $current_date)->format("%r%a");
         return $diff;
@@ -69,8 +58,8 @@ class Analytics
     }
     public function getTimeDiffrenceInSecond()
     {
-        $engagement_date = new DateTime($_SESSION[$this->engagementKey]);
-        $current_date = new DateTime($this->getDate());
+        $engagement_date = new \DateTime($_SESSION[$this->engagementKey]);
+        $current_date = new \DateTime($this->getDate());
         $time_diff_minutes = date_diff($engagement_date, $current_date)->i;
         $time_diff_second = $time_diff_minutes * 60 + date_diff($engagement_date, $current_date)->s;
 
@@ -83,9 +72,11 @@ class Analytics
         // checking tracking cookie  set or not
         if ($this->isCookieSet($this->trackingKey)) {
             // update engagment if session is set
+            $isSessionUpdated = false;
             if ($this->isSessionSet($this->engagementKey)) {
                 $this->updateEngagement();
                 $this->setEngagementSession(false);
+                $isSessionUpdated = true;
             }
             // Update Retention if Tracking Cookies date is not todays.
             if ($this->checkRetention() != 0) {
@@ -93,6 +84,10 @@ class Analytics
                     $this->updateRetentionLog();
                 }
                 $this->resetTracker();
+                $isSessionUpdated = true;
+            }
+            if ($isSessionUpdated = false) {
+                $this->setEngagementSession();
             }
         } else {
             $this->startTracker();
@@ -110,13 +105,13 @@ class Analytics
         $info[] = $this->userInfo->getBrowser();
         $info[] = $this->userInfo->getDevice();
 
-        $this->conn->insertVisitorLog($info);
+        $this->dbConnection->insertVisitorLog($info);
     }
     public function updateRetentionLog()
     {
         $info = array();
-        $info[0] = $this->isCookieSet($this->sessionKey) ? $_COOKIE[$this->sessionKey] : "000";
-        $this->conn->insertRetentionLog($info);
+        $info[0] = $this->isCookieSet($this->sessionKey) ? $_COOKIE[$this->sessionKey] : session_id();
+        $this->dbConnection->insertRetentionLog($info);
     }
     public function updateEngagement()
     {
@@ -126,7 +121,7 @@ class Analytics
         if ($time_diff_second < $seconds_in_hours && $time_diff_second > 0) {
             $info[0] = $time_diff_second;
             $info[1] = (string)$this->isCookieSet($this->sessionKey) ? $_COOKIE[$this->sessionKey] : "000";
-            $this->conn->updateEngagementLog($info);
+            $this->dbConnection->updateEngagementLog($info);
         }
     }
     public function isCookieSet($key = null): bool
@@ -143,11 +138,3 @@ class Analytics
         return $result;
     }
 }
-
-
-$database = new Database("localhost", "root", "", "student_database");
-$obj = new Analytics(new UserInfo(), new ConnectionLog($database), new IdConfig());
-$obj->track();
-
-echo "<pre>";
-print_r($_SERVER);

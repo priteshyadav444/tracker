@@ -1,5 +1,7 @@
 <?php
 
+namespace Tracker\Helper;
+
 class UserInfo
 {
     private $browserInfo;
@@ -10,7 +12,7 @@ class UserInfo
         //use try-catch to prevent error when server is not configured to use browscap (get_browser() function)
         try {
             $this->browserInfo = @get_browser($_SERVER['HTTP_USER_AGENT'], true);
-        } catch (Exception $e) {
+        } catch (\Exception $e) {
             $this->browserInfo = array();
         }
 
@@ -19,9 +21,9 @@ class UserInfo
             $this->geoInfo = $this->getGeoInfo();
 
             if (!is_array($this->geoInfo)) {
-                throw new Exception('We do not got a valid JSON answer from Freegeoip service.', 1);
+                throw new \Exception('We do not got a valid JSON answer from Freegeoip service.', 1);
             }
-        } catch (Exception $e) {
+        } catch (\Exception $e) {
             $this->geoInfo = array();
         }
     }
