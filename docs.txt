@@ -1,0 +1,88 @@
+php_value auto_prepend_file "C:\xampp\htdocs\programs\Tracker\Main\Tracker.php"
+SetEnv servername localhost 
+SetEnv username root
+SetEnv password 
+SetEnv database student_database
+
+
+
+Tracking pageviews: The program can track the number of times a specific page has been viewed.
+
+Tracking unique visitors: The program can identify unique visitors 
+to the website and track their behavior across multiple visits.
+
+Referral tracking: The program can track where visitors are coming from,
+ 
+such as search engines, 
+social media, or 
+other websites.
+
+User engagement: The program can track user engagement metrics, 
+such as time spent on the site, number of pages viewed per visit, and bounce rate.
+
+Geographic tracking: The program can track the geographic location of visitors to the website.
+
+Device tracking: The program can track the type of device used by visitors to the website, such as desktop or mobile.
+
+Custom tracking: The program can be customized to track specific events, 
+such as form submissions or clicks on specific buttons.
+
+Reporting and analysis: The program can generate reports and provide insights 
+into website traffic and user behavior, such as top pages visited, most popular referral sources, and user demographics.
+
+Real-time monitoring: The program can provide real-time data on website traffic and 
+user behavior, allowing for immediate response to changes in traffic patterns or user behavior.
+
+Integration with other tools: The program can integrate with other tools, 
+such as Google Analytics or marketing automation software, 
+to provide a more comprehensive view of website traffic and user behavior.
+
+Returning visitor
+
+
+No of Times Particular Pages has viewed.
+getCookies.
+
+
+CREATE TABLE `visitor_logs` (
+ `id` int(11) NOT NULL AUTO_INCREMENT,
+ `page_url` varchar(255) COLLATE utf8_unicode_ci NOT NULL,
+ `referrer_url` varchar(255) COLLATE utf8_unicode_ci DEFAULT NULL,
+ `user_ip_address` varchar(50) COLLATE utf8_unicode_ci NOT NULL,
+ `user_agent` varchar(255) COLLATE utf8_unicode_ci NOT NULL,
+ `created` datetime NOT NULL DEFAULT current_timestamp(),
+ PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
+
+
+// Include the database configuration file 
+include_once 'dbConfig.php'; 
+ 
+// Get current page URL 
+$protocol = ((!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] != 'off') || $_SERVER['SERVER_PORT'] == 443) ? "https://" : "http://"; 
+$currentURL = $protocol . $_SERVER['HTTP_HOST'] . $_SERVER['REQUEST_URI'] . $_SERVER['QUERY_STRING']; 
+ 
+// Get server related info 
+$user_ip_address = $_SERVER['REMOTE_ADDR']; 
+$referrer_url = !empty($_SERVER['HTTP_REFERER'])?$_SERVER['HTTP_REFERER']:'/'; 
+$user_agent = $_SERVER['HTTP_USER_AGENT']; 
+ 
+// Insert visitor log into database 
+$sql = "INSERT INTO visitor_logs (page_url, referrer_url, user_ip_address, user_agent, created) VALUES (?,?,?,?,NOW())"; 
+$stmt = $db->prepare($sql); 
+$stmt->bind_param("ssss", $currentURL, $referrer_url, $user_ip_address, $user_agent); 
+$insert = $stmt->execute(); 
+ 
+?>
+
+
+session should be started in apache
+.htaccess file or include TrackerConfig
+way of adding tracker in project
+Globaly using htaccess file prepend
+Other using trackerConfig inclusion and menory adding database config.
+
+
+Session Default Value.
+
+way of adding extra table details
