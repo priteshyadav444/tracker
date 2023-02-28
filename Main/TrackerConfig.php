@@ -20,7 +20,8 @@ class TrackerConfig
     public $engagementKey = "";
     public $sessionKey = "";
     public $domain = ""; // mention your domain name in .example.com 
-    public function __construct(DBConnection $dbConnection = null, SessionCookiesConfig $sessionCookiesConfig = new SessionCookiesConfig(), UserInfo $userInfo = new UserInfo)
+    public $userHashId = "";
+    public function __construct(DBConnection $dbConnection = null, SessionCookiesConfig $sessionCookiesConfig, UserInfo $userInfo = new UserInfo)
     {
         $this->userInfo = $userInfo;
         $this->dbConnection = $dbConnection;
@@ -28,6 +29,7 @@ class TrackerConfig
         $this->engagementKey = $sessionCookiesConfig->engagementKey;
         $this->sessionKey = $sessionCookiesConfig->sessionKey;
         $this->domain = $sessionCookiesConfig->domain;
+        $this->userHashId = $sessionCookiesConfig->userHashId;
     }
     public function setRetentionCookie()
     {
@@ -38,7 +40,7 @@ class TrackerConfig
         $_SESSION[$this->engagementKey] = $this->getDate();
 
         if ($this->sessionKey && $insertInDatabase) {
-            $info[0] = session_id();
+            $info[0] = $this->getLogId();
             $this->dbConnection->insertEngagementLog($info);
         }
     }
@@ -99,7 +101,7 @@ class TrackerConfig
     public function generatLog()
     {
         $info = array();
-        $info[0] = $this->isCookieSet($this->sessionKey) ? $_COOKIE[$this->sessionKey] : session_id();
+        $info[0] = $this->getLogId();
         $info[] = $this->userInfo->getCurrentURL();
         $info[] = $this->userInfo->getRefererURL();
         $info[] =  $this->userInfo->getIP();
@@ -112,7 +114,7 @@ class TrackerConfig
     public function updateRetentionLog()
     {
         $info = array();
-        $info[0] = $this->isCookieSet($this->sessionKey) ? $_COOKIE[$this->sessionKey] : session_id();
+        $info[0] = $this->getLogId();
         $this->dbConnection->insertRetentionLog($info);
     }
     public function updateEngagement()
@@ -122,7 +124,7 @@ class TrackerConfig
         // checking engagment time in second.
         if ($time_diff_second < $seconds_in_hours && $time_diff_second > 0) {
             $info[0] = $time_diff_second;
-            $info[1] = (string)$this->isCookieSet($this->sessionKey) ? $_COOKIE[$this->sessionKey] : session_id();
+            $info[1] = (string)$this->getLogId();
             $this->dbConnection->updateEngagementLog($info);
         }
     }
@@ -134,9 +136,32 @@ class TrackerConfig
     {
         return !empty($_SESSION[$key]);
     }
+
+    /**
+     * getDate get current date with default date format
+     *
+     * @param  mixed $format format for specific format
+     * @return string
+     */
     public function getDate($format = "Y-m-d H:i:s"): string
     {
         $result = date($format);
         return $result;
+    }
+
+    /**
+     * getLogId returns id which insert into a database Configure this function to store key in database
+     * currently it is storeing session if userhashid is not set else it is storing sessiion id.
+     *
+     * @return void
+     */
+    private function getLogId()
+    {
+        if (empty($this->userHashId)) {
+            $id = $this->isCookieSet($this->sessionKey) ? $_COOKIE[$this->sessionKey] : session_id();
+        } else {
+            $id = hash("md5", $this->userHashId);
+        }
+        return $id;
     }
 }
