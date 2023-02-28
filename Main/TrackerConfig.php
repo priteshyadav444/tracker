@@ -2,6 +2,9 @@
 
 namespace Tracker\Main;
 
+if (session_status() != PHP_SESSION_ACTIVE)
+    @session_start();
+
 use Tracker\Helper\UserInfo;
 use Tracker\Helper\SessionCookiesConfig;
 
@@ -96,7 +99,7 @@ class TrackerConfig
     public function generatLog()
     {
         $info = array();
-        $info[0] = $this->isCookieSet($this->sessionKey) ? $_COOKIE[$this->sessionKey] : "000";
+        $info[0] = $this->isCookieSet($this->sessionKey) ? $_COOKIE[$this->sessionKey] : session_id();
         $info[] = $this->userInfo->getCurrentURL();
         $info[] = $this->userInfo->getRefererURL();
         $info[] =  $this->userInfo->getIP();
