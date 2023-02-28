@@ -16,20 +16,26 @@ class Tracker
 {
     private $tracker = "";
 
-    public function __construct(DbConnection $dbConnection, SessionCookiesConfig $sessionCookiesConfig = new SessionCookiesConfig(), UserInfo $userInfo = new UserInfo())
+    public function __construct(DBConnection $dbConnection, SessionCookiesConfig $sessionCookiesConfig)
     {
-        $this->tracker = new TrackerConfig($dbConnection, $sessionCookiesConfig, $userInfo);
+        $this->tracker = new TrackerConfig($dbConnection, $sessionCookiesConfig);
     }
     public function start()
     {
         $this->tracker->track();
     }
 }
-$servername = "localhost";
-$username = "root";
-$password = "";
-$database = "student_database";
+$servername = getenv('servername') ?? "localhost";
+$username = getenv('username') ?? "";
+$password = getenv('password') ?? "";
+$database = getenv('database') ?? "";
 
+$userHashId = $_SERVER['userHashId'] ?? "123";
+
+$sessionCookiesConfig = new SessionCookiesConfig("visitid", "KKK", "PHPSESSID", "localhost", $userHashId);
 $databaseConfig = new DatabaseConfig($servername, $username, $password, $database);
-$tracker = new Tracker(new DBConnection($databaseConfig));
-$tracker->start();
+
+// if only environment variable set for sername than only create Tracker Object.
+if ($servername != "" && $username != "" && $database != "") {
+    $tracker = new Tracker(new DBConnection($databaseConfig), $sessionCookiesConfig);
+}
