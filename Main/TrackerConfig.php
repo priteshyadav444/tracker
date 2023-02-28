@@ -45,9 +45,8 @@ class TrackerConfig
     }
     public function checkRetention()
     {
-        $retation_date = new \DateTime($_COOKIE[$this->trackingKey]);
-        $current_date = new \DateTime($this->getDate());
-
+        $retation_date = new \DateTime(date_format(new \DateTime($_COOKIE[$this->trackingKey]), "Y/m/d"));
+        $current_date = new \DateTime($this->getDate("Y/m/d"));
         $diff = date_diff($retation_date, $current_date)->format("%r%a");
         return $diff;
     }
@@ -86,7 +85,7 @@ class TrackerConfig
                 $this->resetTracker();
                 $isSessionUpdated = true;
             }
-            if ($isSessionUpdated = false) {
+            if ($isSessionUpdated == false) {
                 $this->setEngagementSession();
             }
         } else {
@@ -120,7 +119,7 @@ class TrackerConfig
         // checking engagment time in second.
         if ($time_diff_second < $seconds_in_hours && $time_diff_second > 0) {
             $info[0] = $time_diff_second;
-            $info[1] = (string)$this->isCookieSet($this->sessionKey) ? $_COOKIE[$this->sessionKey] : "000";
+            $info[1] = (string)$this->isCookieSet($this->sessionKey) ? $_COOKIE[$this->sessionKey] : session_id();
             $this->dbConnection->updateEngagementLog($info);
         }
     }
@@ -132,9 +131,9 @@ class TrackerConfig
     {
         return !empty($_SESSION[$key]);
     }
-    public function getDate(): string
+    public function getDate($format = "Y-m-d H:i:s"): string
     {
-        $result = date("Y-m-d H:i:s");
+        $result = date($format);
         return $result;
     }
 }
