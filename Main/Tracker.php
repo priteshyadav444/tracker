@@ -18,7 +18,7 @@ class Tracker
 
     public function __construct(DBConnection $dbConnection, SessionCookiesConfig $sessionCookiesConfig)
     {
-        $this->tracker = new TrackerConfig($dbConnection, $sessionCookiesConfig);
+        $this->tracker = new TrackerConfig($dbConnection, $sessionCookiesConfig, new UserInfo());
     }
     public function start()
     {
@@ -32,7 +32,7 @@ $database = getenv('database') ?? "";
 
 $userHashId = $_SERVER['userHashId'] ?? "123";
 
-$sessionCookiesConfig = new SessionCookiesConfig("visitid", "KKK", "PHPSESSID", "localhost", $userHashId);
+$sessionCookiesConfig = new SessionCookiesConfig("visitiId", "engagametId", "PHPSESSID", "localhost", $userHashId);
 $databaseConfig = new DatabaseConfig($servername, $username, $password, $database);
 
 // if only environment variable set for sername than only create Tracker Object.

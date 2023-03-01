@@ -21,7 +21,7 @@ class TrackerConfig
     public $sessionKey = "";
     public $domain = ""; // mention your domain name in .example.com 
     public $userHashId = "";
-    public function __construct(DBConnection $dbConnection = null, SessionCookiesConfig $sessionCookiesConfig, UserInfo $userInfo = new UserInfo)
+    public function __construct(DBConnection $dbConnection = null, SessionCookiesConfig $sessionCookiesConfig, UserInfo $userInfo)
     {
         $this->userInfo = $userInfo;
         $this->dbConnection = $dbConnection;
@@ -97,7 +97,7 @@ class TrackerConfig
             $this->startTracker();
         }
     }
-
+    
     public function generatLog()
     {
         $info = array();
