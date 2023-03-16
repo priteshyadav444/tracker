@@ -340,7 +340,7 @@ class UserInfo
 
     /**
      * Get geo information about user. For this we use user IP and external service
-     * Freegeoip (http://freegeoip.net)
+     * IpWho (http://ipwho.is/)
      */
     private function getGeoInfo()
     {

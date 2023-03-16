@@ -13,13 +13,12 @@ use Tracker\Main\DBConnection;
 
 class TrackerConfig
 {
-
     public $userInfo = "";
     public $dbConnection = "";
     public $trackingKey  = "";
     public $engagementKey = "";
     public $sessionKey = "";
-    public $domain = ""; // mention your domain name in .example.com 
+    public $domain = "";
     public $userHashId = "";
     public function __construct(DBConnection $dbConnection = null, SessionCookiesConfig $sessionCookiesConfig, UserInfo $userInfo)
     {
@@ -31,46 +30,14 @@ class TrackerConfig
         $this->domain = $sessionCookiesConfig->domain;
         $this->userHashId = $sessionCookiesConfig->userHashId;
     }
-    public function setRetentionCookie()
-    {
-        setcookie($this->trackingKey, $this->getDate(), strtotime("+1 week"), "/", $this->domain, false);
-    }
-    public function setEngagementSession($insertInDatabase = true)
-    {
-        $_SESSION[$this->engagementKey] = $this->getDate();
-
-        if ($this->sessionKey && $insertInDatabase) {
-            $info[0] = $this->getLogId();
-            $this->dbConnection->insertEngagementLog($info);
-        }
-    }
-    public function startTracker()
-    {
-        $this->resetTracker();
-    }
-    public function checkRetention()
-    {
-        $retation_date = new \DateTime(date_format(new \DateTime($_COOKIE[$this->trackingKey]), "Y/m/d"));
-        $current_date = new \DateTime($this->getDate("Y/m/d"));
-        $diff = date_diff($retation_date, $current_date)->format("%r%a");
-        return $diff;
-    }
-    public function resetTracker()
-    {
-        $this->setRetentionCookie();
-        $this->setEngagementSession();
-    }
-    public function getTimeDiffrenceInSecond()
-    {
-        $engagement_date = new \DateTime($_SESSION[$this->engagementKey]);
-        $current_date = new \DateTime($this->getDate());
-        $time_diff_minutes = date_diff($engagement_date, $current_date)->i;
-        $time_diff_second = $time_diff_minutes * 60 + date_diff($engagement_date, $current_date)->s;
-
-        return $time_diff_second;
-    }
+    /**
+     * Call this function to Track a Particular Page.
+     *
+     * @return void
+     */
     public function track()
     {
+        // insert visitor log
         $this->generatLog();
 
         // checking tracking cookie  set or not
@@ -97,7 +64,61 @@ class TrackerConfig
             $this->startTracker();
         }
     }
-    
+    public function startTracker()
+    {
+        $this->resetTracker();
+    }
+    public function resetTracker()
+    {
+        $this->setRetentionCookie();
+        $this->setEngagementSession();
+    }
+    public function setRetentionCookie()
+    {
+        setcookie($this->trackingKey, $this->getDate(), strtotime("+1 week"), "/", $this->domain, false);
+    }
+    public function setEngagementSession($insertInDatabase = true)
+    {
+        $_SESSION[$this->engagementKey] = $this->getDate();
+
+        if ($this->sessionKey && $insertInDatabase) {
+            $info[0] = $this->getLogId();
+            $this->dbConnection->insertEngagementLog($info);
+        }
+    }
+    public function checkRetention()
+    {
+        $retation_date = new \DateTime(date_format(new \DateTime($_COOKIE[$this->trackingKey]), "Y/m/d"));
+        $current_date = new \DateTime($this->getDate("Y/m/d"));
+        $diff = date_diff($retation_date, $current_date)->format("%r%a");
+        return $diff;
+    }
+    /**
+     * check is session set or not
+     *
+     * @param  mixed key to check
+     * @return bool
+     */
+    public function isCookieSet($key = null): bool
+    {
+        return !empty($_COOKIE[$key]);
+    }
+    /**
+     * Check is session set or not 
+     *
+     * @param  mixed session key to check
+     * @return bool
+     */
+    public function isSessionSet($key = null): bool
+    {
+        return !empty($_SESSION[$key]);
+    }
+
+    /**
+     * Generate Visitor log and insert into database
+     *
+     * @return void
+     */
     public function generatLog()
     {
         $info = array();
@@ -111,12 +132,22 @@ class TrackerConfig
 
         $this->dbConnection->insertVisitorLog($info);
     }
+    /**
+     * update retention in a database if same is visited again using session id
+     *
+     * @return void
+     */
     public function updateRetentionLog()
     {
         $info = array();
         $info[0] = $this->getLogId();
         $this->dbConnection->insertRetentionLog($info);
     }
+    /**
+     * update enagement for the same session in a database
+     *
+     * @return void
+     */
     public function updateEngagement()
     {
         $time_diff_second = $this->getTimeDiffrenceInSecond();
@@ -128,14 +159,6 @@ class TrackerConfig
             $this->dbConnection->updateEngagementLog($info);
         }
     }
-    public function isCookieSet($key = null): bool
-    {
-        return !empty($_COOKIE[$key]);
-    }
-    public function isSessionSet($key = null): bool
-    {
-        return !empty($_SESSION[$key]);
-    }
 
     /**
      * getDate get current date with default date format
@@ -145,12 +168,11 @@ class TrackerConfig
      */
     public function getDate($format = "Y-m-d H:i:s"): string
     {
-        $result = date($format);
-        return $result;
+        return date($format);
     }
 
     /**
-     * getLogId returns id which insert into a database Configure this function to store key in database
+     * getLogId returns id which insert into a database. Configure this function to store key in database
      * currently it is storeing session if userhashid is not set else it is storing sessiion id.
      *
      * @return void
@@ -163,5 +185,14 @@ class TrackerConfig
             $id = hash("md5", $this->userHashId);
         }
         return $id;
+    }
+    public function getTimeDiffrenceInSecond()
+    {
+        $engagement_date = new \DateTime($_SESSION[$this->engagementKey]);
+        $current_date = new \DateTime($this->getDate());
+        $time_diff_minutes = date_diff($engagement_date, $current_date)->i;
+        $time_diff_second = $time_diff_minutes * 60 + date_diff($engagement_date, $current_date)->s;
+
+        return $time_diff_second;
     }
 }

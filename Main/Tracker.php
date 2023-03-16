@@ -25,6 +25,7 @@ class Tracker
         $this->tracker->track();
     }
 }
+
 $servername = getenv('servername') ?? "localhost";
 $username = getenv('username') ?? "";
 $password = getenv('password') ?? "";
@@ -35,7 +36,7 @@ $userHashId = $_SERVER['userHashId'] ?? "123";
 $sessionCookiesConfig = new SessionCookiesConfig("visitiId", "engagametId", "PHPSESSID", "localhost", $userHashId);
 $databaseConfig = new DatabaseConfig($servername, $username, $password, $database);
 
-// if only environment variable set for sername than only create Tracker Object.
+// if only environment variable set for server name than only create Tracker Object.
 if ($servername != "" && $username != "" && $database != "") {
     $tracker = new Tracker(new DBConnection($databaseConfig), $sessionCookiesConfig);
 }
