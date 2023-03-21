@@ -126,7 +126,11 @@ class TrackerConfig
         $info[] = $this->userInfo->getCurrentURL();
         $info[] = $this->userInfo->getRefererURL();
         $info[] =  $this->userInfo->getIP();
-        $info[] = $this->userInfo->getRegionName() . "/" . $this->userInfo->getCity() . "/" . $this->userInfo->getCountryName();
+        if (!$this->userInfo->getRegionName() . "/" . $this->userInfo->getCity() . "/" . $this->userInfo->getCountryName() == "//")
+            $info[] = $this->userInfo->getRegionName() . "/" . $this->userInfo->getCity() . "/" . $this->userInfo->getCountryName();
+        else
+            $info[] = NULL;
+
         $info[] = $this->userInfo->getBrowser();
         $info[] = $this->userInfo->getDevice();
 
